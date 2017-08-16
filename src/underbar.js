@@ -194,11 +194,18 @@
       accumulator = collection[0];
       index = 1;
     }
-    
-    for (; index < collection.length; index++) { 
+    if (collection.constructor === Array) {
+      for (; index < collection.length; index++) { 
         
-      accumulator = iterator(accumulator, collection[index]);
+        accumulator = iterator(accumulator, collection[index]);
         
+      }
+    } else {
+      
+      
+      for (var prop in collection) {
+        accumulator = iterator(accumulator, collection[prop]);
+      }
     }
 
     return accumulator;
@@ -221,12 +228,62 @@
   // Determine whether all of the elements match a truth test.
   _.every = function(collection, iterator) {
     // TIP: Try re-using reduce() here.
+    //var copyCollection = collection.slice(0, collection.length);
+    var returnVal;
+    if (iterator !== undefined) { 
+      
+      returnVal = _.reduce(collection, function(accumulator, value) {
+        //console.log(!null) = true && !undefined = true;
+        if (!iterator(value) || accumulator === false) {
+          return false;
+        } else {
+          return true;
+        }
+      
+      }, true);
+    } else {
+      returnVal = _.reduce(collection, function(accumulator, value) {
+        if (!value || accumulator === false) {
+          return false;
+        } else {
+          return true;
+        }
+      
+      }, true);
+    }
+    return returnVal;
+    
   };
 
   // Determine whether any of the elements pass a truth test. If no iterator is
   // provided, provide a default one
   _.some = function(collection, iterator) {
     // TIP: There's a very clever way to re-use every() here.
+      
+    if (iterator === undefined) {
+      iterator = function(x) {
+        if (x) {
+          return true;
+        } else {
+          return false;
+        }
+      };    
+    }
+    
+    var returnVal = _.every(collection, function(x) {
+      
+      return !iterator(x);
+      
+    });
+
+    if (returnVal) {
+      returnVal = false;
+    } else {
+      returnVal = true;
+    }
+  
+    return returnVal; 
+    
   };
 
 
@@ -249,11 +306,27 @@
   //     bla: "even more stuff"
   //   }); // obj1 now contains key1, key2, key3 and bla
   _.extend = function(obj) {
+    for (var i = 1; i < arguments.length; i++) {
+      obj = Object.assign(obj, arguments[i]);
+    
+    }
+    return obj;
+ 
   };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
+    
+    for (var i = 1; i < arguments.length; i++) {
+      for (var key in arguments[i]) {
+        if (obj[key] === undefined) {
+          obj[key] = arguments[i][key];
+        }
+      }
+      
+    }
+    return obj;
   };
 
 
@@ -297,6 +370,32 @@
   // already computed the result for the given argument and return that value
   // instead if possible.
   _.memoize = function(func) {
+    // var computedArguments = {};
+
+    // return function(x) {
+    //   if (computedArguments[x] === undefined) {
+    //     computedArguments[x] = func.apply(this, arguments);
+    //   } else {
+    //     return computedArguments[x];
+    //   }
+      
+    // };
+
+    var cache = {};
+    var result;
+
+    return function() {
+
+      result = JSON.stringify(arguments);
+      
+      //console.log(JSON.stringify(arguments));
+      if (!cache.hasOwnProperty(result)) {
+        cache[result] = func.apply(this, arguments);
+        //console.log("i ran");
+      }
+
+      return cache[result];
+    };
   };
 
   // Delays a function for the given number of milliseconds, and then calls
@@ -305,7 +404,20 @@
   // The arguments for the original function are passed after the wait
   // parameter. For example _.delay(someFunction, 500, 'a', 'b') will
   // call someFunction('a', 'b') after 500ms
+
   _.delay = function(func, wait) {
+    var args = [].slice.call(arguments);
+    setTimeout(function() {
+      
+      args = args.slice(2);
+      //console.log(args);
+      
+      return func.apply(this, args);
+      //}
+    }, wait);       
+
+    // return setTimeout.apply(this, arguments);
+
   };
 
 
@@ -320,6 +432,21 @@
   // input array. For a tip on how to make a copy of an array, see:
   // http://mdn.io/Array.prototype.slice
   _.shuffle = function(array) {
+    
+    var arrayLength = array.length;
+    var newArray = new Array(arrayLength);
+    var randomIndex;  
+    var i = 0;
+    while (_.indexOf(newArray, undefined) !== -1) {
+      randomIndex = Math.floor(Math.random() * 1000) % arrayLength; 
+      //console.log(randomIndex);
+      if (newArray[randomIndex] === undefined) {
+        newArray[randomIndex] = array[i];
+        i++;
+      }
+    }
+    
+    return newArray;
   };
 
 
